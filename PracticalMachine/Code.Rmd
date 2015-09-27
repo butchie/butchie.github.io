@@ -1,0 +1,201 @@
+---
+title: "Predicting Biceps Curl Form Based on Accelerometer Data"
+author: "butchie"
+date: "September 23, 2015"
+output: html_document
+---
+
+This is the code for the Practical Machine Learning Project with no suppression of printing. For more information on the data set and analysis, please see the Report.
+
+```{r}
+#Library
+library(caret)
+library(rpart)
+library(gridExtra)
+library(gbm)
+#Read in data, clean it up
+fullSet<-read.csv("pml-training.csv",na.strings=c("", "NA")) #converts blanks to NAs
+interSet<-fullSet[ , colSums(is.na(fullSet)) == 0] #Removes columns with any NA values
+data=interSet[,c(2,8:60)]
+#Exploratory
+p <- ggplot(data, aes(pitch_belt, roll_belt))+ geom_point(aes(colour=classe),size=3,alpha=.2)+ggtitle("Figure 1: Scatterplot of Classes")
+p <- ggplot(data, aes(pitch_belt, roll_belt))+ geom_point(aes(colour=classe),size=3,alpha=.2)+
+    xlim(-60,60)+ylim(-50,175)+facet_wrap(~user_name)+ggtitle("Figure 2: Scatterplot of Classes by User")
+print(p)
+
+#Prediction for Adelmo
+#split by name
+data1<-data[data$user_name=="adelmo",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("pitch_belt","roll_belt","yaw_belt","magnet_dumbbell_z","yaw_dumbbell","magnet_belt_y","accel_belt_z","yaw_arm","accel_dumbbell_z","classe")]
+rValid1<-valid1[,c("pitch_belt","roll_belt","yaw_belt","magnet_dumbbell_z","yaw_dumbbell","magnet_belt_y","accel_belt_z","yaw_arm","accel_dumbbell_z","classe")]
+#boost train
+boostFitAd<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitAd$results
+boostpredAdT<-predict(boostFitAd)
+perfAdT<-table(boostpredAdT,rTrain1$classe)
+resAdT<-sum(diag(perfAdT))/nrow(train1)
+#print(resAdT)
+boostpredAd<-predict(boostFitAd,newdata=rValid1)
+perfAd<-table(boostpredAd,rValid1$classe)
+#print(perfAd)
+adelmo<-sum(diag(perfAd))/nrow(valid1)
+#print(adelmo)
+
+#Prediction for Carlitos
+#split by name
+data1<-data[data$user_name=="carlitos",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("yaw_belt","accel_belt_z","magnet_belt_z","roll_arm","roll_belt","magnet_dumbbell_y","yaw_arm","pitch_forearm","accel_arm_x","magnet_belt_x","classe")]
+rValid1<-valid1[,c("yaw_belt","accel_belt_z","magnet_belt_z","roll_arm","roll_belt","magnet_dumbbell_y","yaw_arm","pitch_forearm","accel_arm_x","magnet_belt_x","classe")]
+#boost train
+boostFitCa<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitCa$results
+boostpredCaT<-predict(boostFitCa)
+perfCaT<-table(boostpredCaT,rTrain1$classe)
+resCaT<-sum(diag(perfCaT))/nrow(train1)
+#print(resCaT)   #Train data performance
+boostpredCa<-predict(boostFitCa,newdata=rValid1)
+perfCa<-table(boostpredCa,rValid1$classe)
+#print(perfCa)
+carlitos<-sum(diag(perfCa))/nrow(valid1)
+#print(carlitos)    #Valid data performance
+
+#Prediction for Charles
+#split by name
+data1<-data[data$user_name=="charles",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("magnet_dumbbell_y","magnet_dumbbell_z","pitch_belt","roll_belt","yaw_belt","magnet_dumbbell_x","accel_dumbbell_x","classe")]
+rValid1<-valid1[,c("magnet_dumbbell_y","magnet_dumbbell_z","pitch_belt","roll_belt","yaw_belt","magnet_dumbbell_x","accel_dumbbell_x","classe")]
+#boost train
+boostFitCh<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitCh$results
+boostpredChT<-predict(boostFitCh)
+perfChT<-table(boostpredChT,rTrain1$classe)
+resChT<-sum(diag(perfChT))/nrow(train1)
+#print(resChT)
+boostpredCh<-predict(boostFitCh,newdata=rValid1)
+perfCh<-table(boostpredCh,rValid1$classe)
+#print(perfCh)
+charles<-sum(diag(perfCh))/nrow(valid1)
+#print(charles)
+
+#Prediction for Eurico
+#split by name
+data1<-data[data$user_name=="eurico",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("yaw_belt","accel_dumbbell_z","pitch_belt","magnet_dumbbell_x","yaw_dumbbell","roll_belt","pitch_forearm","roll_dumbbell","magnet_dumbbell_z","magnet_dumbbell_y","gyros_dumbbell_x","total_accel_dumbbell","accel_dumbbell_y","accel_dumbbell_x","classe")]
+rValid1<-valid1[,c("yaw_belt","accel_dumbbell_z","pitch_belt","magnet_dumbbell_x","yaw_dumbbell","roll_belt","pitch_forearm","roll_dumbbell","magnet_dumbbell_z","magnet_dumbbell_y","gyros_dumbbell_x","total_accel_dumbbell","accel_dumbbell_y","accel_dumbbell_x","classe")]
+#boost train
+boostFitEu<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitEu$results
+boostpredEuT<-predict(boostFitEu)
+perfEuT<-table(boostpredEuT,rTrain1$classe)
+resEuT<-sum(diag(perfEuT))/nrow(train1)
+#print(resEuT)
+boostpredEu<-predict(boostFitEu,newdata=rValid1)
+perfEu<-table(boostpredEu,rValid1$classe)
+#print(perfEu)
+eurico<-sum(diag(perfEu))/nrow(valid1)
+#print(eurico)
+
+#Prediction for Jeremy
+#split by name
+data1<-data[data$user_name=="jeremy",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("pitch_forearm","roll_forearm","magnet_forearm_x","magnet_dumbbell_z","magnet_arm_x","accel_forearm_x","yaw_belt","pitch_belt","accel_belt_z","magnet_dumbbell_y","magnet_dumbbell_x","classe")]
+rValid1<-valid1[,c("pitch_forearm","roll_forearm","magnet_forearm_x","magnet_dumbbell_z","magnet_arm_x","accel_forearm_x","yaw_belt","pitch_belt","accel_belt_z","magnet_dumbbell_y","magnet_dumbbell_x","classe")]
+#boost train
+boostFitJe<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitJe$results
+boostpredJeT<-predict(boostFitJe)
+perfJeT<-table(boostpredJeT,rTrain1$classe)
+resJeT<-sum(diag(perfJeT))/nrow(train1)
+#print(resJeT)
+boostpredJe<-predict(boostFitJe,newdata=rValid1)
+perfJe<-table(boostpredJe,rValid1$classe)
+#print(perfJe)
+jeremy<-sum(diag(perfJe))/nrow(valid1)
+#print(jeremy)
+
+#Prediction for Pedro
+#split by name
+data1<-data[data$user_name=="pedro",]
+data1<-data1[,2:54]
+#Split data
+set.seed(808)
+inTrain<-createDataPartition(y=data1$classe,p=.6,list=FALSE)
+train1<-data1[inTrain,]
+valid1<-data1[-inTrain,]
+#Basic Tree
+treeFit1<-train(classe~.,method="rpart",data=train1)
+print(treeFit1$results)
+varImp(treeFit1) #reduce data to key params
+rTrain1<-train1[,c("yaw_belt","roll_belt","pitch_belt","magnet_belt_z","accel_belt_z","roll_forearm","classe")]
+rValid1<-valid1[,c("yaw_belt","roll_belt","pitch_belt","magnet_belt_z","accel_belt_z","roll_forearm","classe")]
+#boost train
+boostFitPe<-train(classe~.,method="gbm",data=rTrain1,verbose=FALSE)
+boostFitPe$results
+boostpredPeT<-predict(boostFitPe)
+perfPeT<-table(boostpredPeT,rTrain1$classe)
+resPeT<-sum(diag(perfPeT))/nrow(train1)
+#print(resPeT)
+boostpredPe<-predict(boostFitPe,newdata=rValid1)
+perfPe<-table(boostpredPe,rValid1$classe)
+#print(perfPe)
+pedro<-sum(diag(perfPe))/nrow(valid1)
+#print(pedro)
+
+#Cross Valid Result
+result<-c(adelmo,carlitos,charles,eurico,jeremy,pedro)
+accuracy<-data.frame(c('Adelmo','Carlitos','Charles','Eurico','Jeremy','Pedro'),c(resAdT,resCaT,resChT,resEuT,resJeT,resPeT),result)
+colnames(accuracy)<-c("Subject","Training Accuracy","Validation Accuracy")
+print(accuracy)
+bp<-barplot(result*100,main="Figure3: Cross-Validation Performance (Percent)",col="plum", names.arg = c("Adelmo","Carlitos","Charles","Eurico","Jeremy","Pedro"),ylim=c(0,100))
+text(bp, 0, round(result*100, 2),cex=1.5,pos=3)
+```
